@@ -29,7 +29,7 @@ body {
   padding: 10px;
   grid-template-columns: repeat(var(--size), 60px);
   grid-template-rows: repeat(var(--size), 60px);
-  gap: 4px;
+  /* gap: 4px; */
   background-color: #777;
 }
 
@@ -40,7 +40,7 @@ body {
   justify-content: center;
   align-items: center;
   color: white;
-  border: 2px solid #bbb;
+  /* border: 2px solid #bbb; */
   user-select: none;
 }
 
@@ -58,5 +58,69 @@ body {
 }
 
 .board > [data-status='marked'] {
-  background-color: yellow;
+  background-color: yellow !important;
+}
+
+.board > [data-status='hidden']:nth-child(odd) {
+  background-color: #a7d948;
+}
+
+.board > [data-status='hidden']:nth-child(even) {
+  background-color: #8ecc39;
+}
+
+.board > :not([data-status='hidden']):nth-child(odd) {
+  background-color: #d7b899;
+}
+.board > :not([data-status='hidden']):nth-child(even) {
+  background-color: #e5c29f;
+}
+
+.board > [data-status='mine'] {
+  background-color: hsl(var(--bg-mine), 100%, 40%) !important;
+  display: grid;
+  place-content: center;
+}
+
+[data-status='mine'] > div {
+  background-color: hsl(var(--bg-mine), 80%, 25%) !important;
+  width: 0.65em;
+  height: 0.65em;
+  border-radius: 100%;
+}
+
+.count-1 {
+  color: #1976d2;
+}
+
+.count-2 {
+  color: #388e3c;
+}
+
+.count-3 {
+  color: #d32f2f;
+}
+
+.count-4 {
+  color: #7b1fa2;
+}
+
+.count-5 {
+  color: #ff901a;
+}
+
+[data-status='number'].border-left {
+  border-left: 2px solid #87af3a;
+}
+
+[data-status='number'].border-top {
+  border-top: 2px solid #87af3a;
+}
+
+[data-status='number'].border-right {
+  border-right: 2px solid #87af3a;
+}
+
+[data-status='number'].border-bottom {
+  border-bottom: 2px solid #87af3a;
 }

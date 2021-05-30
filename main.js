@@ -8,12 +8,17 @@
 // 點右鍵標記雷區
 
 // 在board加入10 * 10按紐
+const BOARD_SIZE = 15
+const BUTTONS_AMOUNT = BOARD_SIZE * BOARD_SIZE
+const MINES_AMOUNT = 30
 const board = document.querySelector('.board')
 setupBoard()
 
 board.addEventListener('click', (e) => {
+  if (e.target.matches('[data-status="marked"]')) return
+
   if (e.target.matches('[data-mine]')) {
-    return gameover()
+    return gameover(e.target)
   }
 
   if (e.target.matches('[data-number]')) {
@@ -25,7 +30,21 @@ board.addEventListener('click', (e) => {
   }
 })
 
-//
+// 右鍵
+board.addEventListener('contextmenu', (e) => {
+  e.preventDefault()
+
+  if (
+    !e.target.matches('[data-status="hidden"]') &&
+    !e.target.matches('[data-status="marked"]')
+  ) {
+    return
+  }
+
+  toggleMarker(e.target)
+})
+
+// 初始化遊戲
 function setupBoard() {
   setMapSize()
   setupButtons()
@@ -36,49 +55,86 @@ function setupBoard() {
 }
 
 /**
- * 標記地雷旁邊的數字或其他空白地
- * @param {Element} buttons 地圖上100個按鈕
+ * 標記地雷旁邊的數字和其他空白地
+ * @param {Element} buttons 地圖上所有按鈕
  */
 function setupNumbersAroundMines(buttons, minesNumbers) {
   buttons.forEach((button, index) => {
     if (button.dataset.mine === 'mine') return
 
     const positionsAround = getPositionsAround(index)
-    let countMinesAround = 0
+    let adjacentMinesCount = 0
 
     positionsAround.forEach((pos) => {
       if (minesNumbers.includes(pos)) {
-        countMinesAround++
+        adjacentMinesCount++
       }
     })
 
-    if (countMinesAround > 0) {
-      button.dataset.number = countMinesAround
+    if (adjacentMinesCount > 0) {
+      button.dataset.number = adjacentMinesCount
+      button.classList.add(`count-${adjacentMinesCount}`)
     } else {
-      button.dataset.space = ''
+      button.dataset.space = 'space'
     }
   })
 }
 
 /**
- *
+ * 檢查 button 的位置是不是在地圖邊緣
+ * @param {Number} index button element 在 board 內的 index
+ */
+function checkPosition(index) {
+  const onFirstColumn = index % BOARD_SIZE === 0
+  const onLastColumn = index % BOARD_SIZE === BOARD_SIZE - 1
+  const onFirstRow = index < BOARD_SIZE
+  const onLastRow = index >= BOARD_SIZE * BOARD_SIZE - BOARD_SIZE
+
+  return {
+    onFirstColumn,
+    onLastColumn,
+    onFirstRow,
+    onLastRow,
+  }
+}
+
+/**
+ * 取得附近八個位置的 index
+ * @param {Number} currentIndex 目前的index
+ */
+function getPositionsIndex(currentIndex) {
+  return {
+    topLeft: currentIndex - 1 - BOARD_SIZE,
+    top: currentIndex - BOARD_SIZE,
+    topRight: currentIndex + 1 - BOARD_SIZE,
+    left: currentIndex - 1,
+    right: currentIndex + 1,
+    bottomLeft: currentIndex - 1 + BOARD_SIZE,
+    bottom: currentIndex + BOARD_SIZE,
+    bottomRight: currentIndex + 1 + BOARD_SIZE,
+  }
+}
+
+/**
+ * 取得 button element 附近按鈕的 index
+ * 要拿來跟地雷的位置比對，標記數字用的
  * @param {Number} index button 的 index
- * @returns button 附近八個位置
+ * @returns 鄰近按鈕的 index，最多八個
  */
 function getPositionsAround(index) {
-  const onFirstColumn = index % 10 === 0
-  const onLastColumn = index % 10 === 9
-  const onFirstRow = index <= 9
-  const onLastRow = index >= 90
+  const { onFirstColumn, onLastColumn, onFirstRow, onLastRow } =
+    checkPosition(index)
 
-  const topLeft = index - 11
-  const top = index - 10
-  const topRight = index - 9
-  const left = index - 1
-  const right = index + 1
-  const bottomLeft = index + 9
-  const bottom = index + 10
-  const bottomRight = index + 11
+  const {
+    topLeft,
+    top,
+    topRight,
+    left,
+    right,
+    bottomLeft,
+    bottom,
+    bottomRight,
+  } = getPositionsIndex(index)
 
   if (onFirstColumn && onFirstRow) {
     return [bottom, right, bottomRight]
@@ -122,40 +178,60 @@ function getPositionsAround(index) {
  */
 function setupMines(buttons) {
   // 地雷數字陣列
-  const minesNumbers = generateTenNumbers()
+  const minesNumbers = generateMinesNumbers()
 
   buttons.forEach((button, index) => {
     if (minesNumbers.includes(index)) {
       button.dataset.mine = 'mine'
+
+      styleMine(button)
     }
   })
 
   return minesNumbers
 }
 
+function styleMine(element) {
+  element.classList.add('bg-mine')
+  element.style.setProperty('--bg-mine', Math.random() * 720)
+
+  const div = document.createElement('div')
+  div.classList.add('fg-mine')
+
+  element.appendChild(div)
+}
+
 /**
- * 產生10個隨機數字，範圍0到99對應index
+ * 產生 MINES_AMOUNT 個不重複隨機數字
+ * 範圍0 ~ BUTTONS_AMOUNT
  * 標記地雷位置用
  * @returns Numbers Array
  */
-function generateTenNumbers() {
+function generateMinesNumbers() {
   let numbers = []
 
-  for (let i = 0; i < 10; i++) {
-    const num = Math.floor(Math.random() * 100)
-    numbers.push(num)
+  while (true) {
+    const num = Math.floor(Math.random() * BUTTONS_AMOUNT)
+
+    if (numbers.includes(num)) {
+      continue
+    } else {
+      numbers.push(num)
+    }
+
+    if (numbers.length === MINES_AMOUNT) break
   }
 
   return numbers
 }
 
 /**
- * 做100個按鈕
+ * 做 BUTTONS_AMOUNT 個按鈕到地圖上
  */
 function setupButtons() {
   const fragment = document.createDocumentFragment()
 
-  for (let i = 1; i <= 100; i++) {
+  for (let i = 1; i <= BUTTONS_AMOUNT; i++) {
     // 按鈕初始狀態
     const div = document.createElement('div')
     // div.dataset.status = 'hidden'
@@ -170,7 +246,7 @@ function setupButtons() {
 
 // 用custom property決定地圖尺寸
 function setMapSize() {
-  document.documentElement.style.setProperty('--size', '10')
+  document.documentElement.style.setProperty('--size', BOARD_SIZE)
 }
 
 function coverButtons(buttons) {
@@ -180,14 +256,20 @@ function coverButtons(buttons) {
 }
 
 /**
- * gg 顯示所有地雷
+ * gg 顯示所有地雷，按到的那顆先顯示，其他的陸續顯示
  */
-function gameover() {
-  const mines = board.querySelectorAll('[data-mine]')
-  mines.forEach((element) => {
-    element.dataset.status = 'mine'
-  })
+function gameover(target) {
+  // 顯示按到的那顆地雷
+  target.dataset.status = 'mine'
 
+  // 找出剩下的地雷
+  const mines = [...board.querySelectorAll('[data-mine]')]
+  const restOfMines = mines.filter((mine) => mine !== target)
+
+  // 顯示剩下的地雷
+  revealMines(restOfMines)
+
+  // FIXME: 先別GG
   setTimeout(() => {
     if (confirm('G_G, press ok to restart.')) {
       board.innerHTML = ''
@@ -197,18 +279,48 @@ function gameover() {
 }
 
 /**
- * recursive 顯示連續空白地
- * @param {Element} element 空白地的按鈕
+ * recursive 顯示所有地雷
+ * @param {Element} mines 地雷元素陣列
+ * @param {Number} currentMineIndex
+ */
+function revealMines(mines, currentMineIndex = 0) {
+  let counter = currentMineIndex
+
+  if (counter < mines.length) {
+    mines[currentMineIndex].dataset.status = 'mine'
+    counter++
+    setTimeout(() => {
+      revealMines(mines, counter)
+    }, Math.random() * 500)
+  }
+}
+
+/**
+ * recursive 顯示連續空地或數字
+ * @param {Element} element 空地的按鈕
  */
 function revealSpace(element) {
-  if (element.dataset.number || !element.hasAttribute('data-status')) return
+  // 如果已經是空地就中斷，不然會無限迴圈
+  if (!element.hasAttribute('data-status')) return
+
+  // 顯示空地
   delete element.dataset.status
 
+  // 相連的上下左右元素
   const adjacentElements = getAdjacentElement(element)
 
-  adjacentElements.forEach((element) => {
-    revealSpace(element)
-  })
+  //一個一個揭開
+  setTimeout(() => {
+    adjacentElements.forEach((element) => {
+      // 如果旁邊是數字
+      if (element.dataset.number) {
+        showNumber(element)
+      } else {
+        // 旁邊是空地就 recursive
+        revealSpace(element)
+      }
+    })
+  }, 60)
 }
 
 /**
@@ -217,23 +329,28 @@ function revealSpace(element) {
  * @returns 上下左右的按紐
  */
 function getAdjacentElement(element) {
-  const buttons = [...board.querySelectorAll('div')]
+  const buttons = [...board.querySelectorAll('.board>div')]
+  // 用 ('div') 地雷裡的div也被會選到，所以要再區分
+
   const index = buttons.indexOf(element)
-  const onFirstColumn = index % 10 === 0
-  const onLastColumn = index % 10 === 9
-  const onFirstRow = index <= 9
-  const onLastRow = index >= 90
+  const { onFirstColumn, onLastColumn, onFirstRow, onLastRow } =
+    checkPosition(index)
+
+  const {
+    left: leftElementIndex,
+    right: rightElementIndex,
+    top: topElementIndex,
+    bottom: bottomElementIndex,
+  } = getPositionsIndex(index)
 
   // 上下左右的按紐
-  const left = !onFirstColumn && buttons[index - 1]
-  const right = !onLastColumn && buttons[index + 1]
-  const top = !onFirstRow && buttons[index - 10]
-  const bottom = !onLastRow && buttons[index + 10]
+  const left = !onFirstColumn && buttons[leftElementIndex]
+  const right = !onLastColumn && buttons[rightElementIndex]
+  const top = !onFirstRow && buttons[topElementIndex]
+  const bottom = !onLastRow && buttons[bottomElementIndex]
 
   // 過濾掉null false
-  const elements = [left, right, top, bottom].filter((entry) => entry)
-
-  return elements
+  return [left, right, top, bottom].filter((entry) => entry)
 }
 
 /**
@@ -243,4 +360,19 @@ function getAdjacentElement(element) {
 function showNumber(element) {
   element.dataset.status = 'number'
   element.textContent = element.dataset.number
+
+  const adjacentElements = getAdjacentElement(element)
+}
+
+/**
+ * 切換右鍵的標記
+ * @param {Element} element
+ */
+function toggleMarker(element) {
+  if (element.dataset.status === 'marked') {
+    element.dataset.status = 'hidden'
+    console.log(element.dataset.status)
+  } else {
+    element.dataset.status = 'marked'
+  }
 }
