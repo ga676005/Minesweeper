@@ -110,17 +110,17 @@ body {
 }
 
 [data-status='number'].border-left {
-  border-left: 2px solid #87af3a;
+  border-left: 2px solid grey;
 }
 
 [data-status='number'].border-top {
-  border-top: 2px solid #87af3a;
+  border-top: 2px solid grey;
 }
 
 [data-status='number'].border-right {
-  border-right: 2px solid #87af3a;
+  border-right: 2px solid grey;
 }
 
 [data-status='number'].border-bottom {
-  border-bottom: 2px solid #87af3a;
+  border-bottom: 2px solid grey;
 }

@@ -10,7 +10,7 @@
 // 在board加入10 * 10按紐
 const BOARD_SIZE = 15
 const BUTTONS_AMOUNT = BOARD_SIZE * BOARD_SIZE
-const MINES_AMOUNT = 30
+const MINES_AMOUNT = 20
 const board = document.querySelector('.board')
 setupBoard()
 
@@ -82,6 +82,7 @@ function setupNumbersAroundMines(buttons, minesNumbers) {
 
 /**
  * 檢查 button 的位置是不是在地圖邊緣
+ * 最左邊、最右邊、第一行、最後一行
  * @param {Number} index button element 在 board 內的 index
  */
 function checkPosition(index) {
@@ -119,7 +120,7 @@ function getPositionsIndex(currentIndex) {
  * 取得 button element 附近按鈕的 index
  * 要拿來跟地雷的位置比對，標記數字用的
  * @param {Number} index button 的 index
- * @returns 鄰近按鈕的 index，最多八個
+ * @returns 鄰近按鈕的 index，對應方位最多八個
  */
 function getPositionsAround(index) {
   const { onFirstColumn, onLastColumn, onFirstRow, onLastRow } =
@@ -173,8 +174,8 @@ function getPositionsAround(index) {
 
 /**
  * 標記地雷
- * @param {Element} buttons 地圖上100個按鈕
- * @returns mines numbers 1 ~ 100
+ * @param {HTMLAllCollection} buttons 地圖上所有按鈕
+ * @returns 所有地雷的 index
  */
 function setupMines(buttons) {
   // 地雷數字陣列
@@ -191,12 +192,15 @@ function setupMines(buttons) {
   return minesNumbers
 }
 
+/**
+ * 地雷樣式
+ * @param {Element} element 地雷元素
+ */
 function styleMine(element) {
   element.classList.add('bg-mine')
   element.style.setProperty('--bg-mine', Math.random() * 720)
 
   const div = document.createElement('div')
-  div.classList.add('fg-mine')
 
   element.appendChild(div)
 }
@@ -249,12 +253,6 @@ function setMapSize() {
   document.documentElement.style.setProperty('--size', BOARD_SIZE)
 }
 
-function coverButtons(buttons) {
-  buttons.forEach((button) => {
-    button.dataset.status = 'hidden'
-  })
-}
-
 /**
  * gg 顯示所有地雷，按到的那顆先顯示，其他的陸續顯示
  */
@@ -270,12 +268,12 @@ function gameover(target) {
   revealMines(restOfMines)
 
   // FIXME: 先別GG
-  setTimeout(() => {
-    if (confirm('G_G, press ok to restart.')) {
-      board.innerHTML = ''
-      setupBoard()
-    }
-  }, 0)
+  // setTimeout(() => {
+  //   if (confirm('G_G, press ok to restart.')) {
+  //     board.innerHTML = ''
+  //     setupBoard()
+  //   }
+  // }, 0)
 }
 
 /**
@@ -291,7 +289,7 @@ function revealMines(mines, currentMineIndex = 0) {
     counter++
     setTimeout(() => {
       revealMines(mines, counter)
-    }, Math.random() * 500)
+    }, Math.random() * 150)
   }
 }
 
@@ -306,12 +304,14 @@ function revealSpace(element) {
   // 顯示空地
   delete element.dataset.status
 
-  // 相連的上下左右元素
+  // 過濾有效的相連上下左右元素
   const adjacentElements = getAdjacentElement(element)
 
-  //一個一個揭開
+  // 一個一個揭開
   setTimeout(() => {
-    adjacentElements.forEach((element) => {
+    Object.values(adjacentElements).forEach((element) => {
+      if (!element) return
+
       // 如果旁邊是數字
       if (element.dataset.number) {
         showNumber(element)
@@ -321,6 +321,9 @@ function revealSpace(element) {
       }
     })
   }, 60)
+
+  // 移除空地旁數字的 border
+  removeBorders(adjacentElements)
 }
 
 /**
@@ -349,8 +352,7 @@ function getAdjacentElement(element) {
   const top = !onFirstRow && buttons[topElementIndex]
   const bottom = !onLastRow && buttons[bottomElementIndex]
 
-  // 過濾掉null false
-  return [left, right, top, bottom].filter((entry) => entry)
+  return { left, right, top, bottom }
 }
 
 /**
@@ -361,7 +363,7 @@ function showNumber(element) {
   element.dataset.status = 'number'
   element.textContent = element.dataset.number
 
-  const adjacentElements = getAdjacentElement(element)
+  borderController(element)
 }
 
 /**
@@ -371,8 +373,105 @@ function showNumber(element) {
 function toggleMarker(element) {
   if (element.dataset.status === 'marked') {
     element.dataset.status = 'hidden'
-    console.log(element.dataset.status)
   } else {
     element.dataset.status = 'marked'
   }
+}
+
+/**
+ * 把緊鄰空地的數字元素的 border 移除
+ * @param {Object} adjacentElements 空地旁的上下左右元素
+ */
+function removeBorders(adjacentElements) {
+  if (adjacentElements.left) {
+    adjacentElements.left.classList.remove('border-right')
+  }
+
+  if (adjacentElements.right) {
+    adjacentElements.right.classList.remove('border-left')
+  }
+
+  if (adjacentElements.top) {
+    adjacentElements.top.classList.remove('border-bottom')
+  }
+
+  if (adjacentElements.bottom) {
+    adjacentElements.bottom.classList.remove('border-top')
+  }
+}
+
+/**
+ * 處理連續的數字元素 border 的顯示
+ * @param {Element} element 顯示數字的按鈕
+ */
+function borderController(element) {
+  const { left, right, top, bottom } = getAdjacentElement(element)
+
+  // 左邊有元素時
+  if (left) {
+    // 如果左邊元素不是數字，而且還沒按過，加上border left
+    if (left.dataset.status === 'hidden' && left.dataset.status !== 'number') {
+      element.classList.add('border-left')
+    }
+
+    // 如果左邊元素是數字，移除他的border right
+    if (left.dataset.status === 'number') {
+      left.classList.remove('border-right')
+    }
+  }
+
+  // 右邊有元素時
+  if (right) {
+    // 如果右邊元素是數字，移除他的border left
+    if (right.dataset.status === 'number') {
+      right.classList.remove('border-left')
+    }
+
+    // 如果右邊元素不是數字，而且還沒按過，加上border right
+    if (
+      right.dataset.status === 'hidden' &&
+      right.dataset.status !== 'number'
+    ) {
+      element.classList.add('border-right')
+    }
+  }
+
+  // 上方有元素時
+  if (top) {
+    // 如果上方元素不是數字，而且還沒按過，加上border top
+    if (top.dataset.status === 'hidden' && top.dataset.status !== 'number') {
+      element.classList.add('border-top')
+    }
+
+    // 如果上方元素是數字，移除他的border bottom
+    if (top.dataset.status === 'number') {
+      top.classList.remove('border-bottom')
+    }
+  }
+
+  // 下方有元素時
+  if (bottom) {
+    // 如果下方元素是數字，移除他的border top
+    if (bottom.dataset.status === 'number') {
+      bottom.classList.remove('border-top')
+    }
+
+    // 如果下方元素不是數字，而且還沒按過，加上border bottom
+    if (
+      bottom.dataset.status === 'hidden' &&
+      bottom.dataset.status !== 'number'
+    ) {
+      element.classList.add('border-bottom')
+    }
+  }
+}
+
+/**
+ * 遊戲初始化後把按紐蓋起來
+ * @param {HTMLAllCollection} buttons 地圖上的按紐
+ */
+function coverButtons(buttons) {
+  buttons.forEach((button) => {
+    button.dataset.status = 'hidden'
+  })
 }
