@@ -4,18 +4,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <title>Minesweeper</title>
   <script src="main.js" defer></script>
 </head>
 
 <body>
-  <h3 class="title">Minesweeper</h3>
-  <div class="subtext">
-    Mines Left: 10
-  </div>
-  <div class="board">
+  <div class="container space-children">
 
+    <h3 class="title">Minesweeper</h3>
+    <div class="input-group">
+      <label for="size">Board Size: <span data-board-size-text></span> </label>
+      <input id="size" type="range" value="19" min="5" max="19" step="2" data-board-size-input>
+    </div>
+    <div class="input-group">
+      <label for="mines-amount">Mines Amount: <span data-mines-amount-text></span></label>
+      <input id="mines-amount" value="20" type="range" min="5" max="100" data-mines-amount-input>
+    </div>
+    <div class="input-group">
+      <label for="theme">Theme: </label>
+      <input id="theme" value="0" type="range" min="5" max="360" data-theme-input>
+    </div>
+    <div class="button-container">
+      <button class="button" data-start>restart</button>
+    </div>
+    <p class="error-message" data-error-message></p>
+    <div class="subtext">
+      Mines Left: 10
+    </div>
+    <div class="board">
+
+    </div>
   </div>
 </body>
 

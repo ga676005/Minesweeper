@@ -7,12 +7,33 @@
 // 點到指示就顯示數字
 // 點右鍵標記雷區
 
-// 在board加入10 * 10按紐
-const BOARD_SIZE = 15
-const BUTTONS_AMOUNT = BOARD_SIZE * BOARD_SIZE
-const MINES_AMOUNT = 20
+// FIXME: 轉換size後border顯示變得不正確
+
 const board = document.querySelector('.board')
+const minesInput = document.querySelector('[data-mines-amount-input]')
+const minesAmountDisplay = document.querySelector('[data-mines-amount-text]')
+const boardSizeInput = document.querySelector('[data-board-size-input]')
+const boardSizeDisplay = document.querySelector('[data-board-size-text]')
+const colorInput = document.querySelector('[data-theme-input]')
+const startButton = document.querySelector('[data-start]')
+const errorDisplay = document.querySelector('[data-error-message]')
+
+// input value 是 String
+let BOARD_SIZE = parseInt(boardSizeInput.value),
+  BUTTONS_AMOUNT = BOARD_SIZE * BOARD_SIZE,
+  MINES_AMOUNT = parseInt(minesInput.value),
+  COLOR_VALUE = parseInt(colorInput.value),
+  ERROR = null
+
 setupBoard()
+
+colorInput.addEventListener('input', handleColorInput)
+
+minesInput.addEventListener('input', handleMineInput)
+
+boardSizeInput.addEventListener('input', handleBoardSizeInput)
+
+startButton.addEventListener('click', handleStartButton)
 
 board.addEventListener('click', (e) => {
   if (e.target.matches('[data-status="marked"]')) return
@@ -46,7 +67,12 @@ board.addEventListener('contextmenu', (e) => {
 
 // 初始化遊戲
 function setupBoard() {
+  board.innerHTML = ''
+  minesAmountDisplay.textContent = MINES_AMOUNT
+  boardSizeDisplay.textContent = `${BOARD_SIZE} x ${BOARD_SIZE}`
+
   setMapSize()
+  setMapTheme()
   setupButtons()
   const buttons = [...board.querySelectorAll('div')]
   const minesNumbers = setupMines(buttons)
@@ -217,13 +243,9 @@ function generateMinesNumbers() {
   while (true) {
     const num = Math.floor(Math.random() * BUTTONS_AMOUNT)
 
-    if (numbers.includes(num)) {
-      continue
-    } else {
-      numbers.push(num)
-    }
+    if (!numbers.includes(num)) numbers.push(num)
 
-    if (numbers.length === MINES_AMOUNT) break
+    if (numbers.length >= MINES_AMOUNT) break
   }
 
   return numbers
@@ -268,12 +290,11 @@ function gameover(target) {
   revealMines(restOfMines)
 
   // FIXME: 先別GG
-  // setTimeout(() => {
-  //   if (confirm('G_G, press ok to restart.')) {
-  //     board.innerHTML = ''
-  //     setupBoard()
-  //   }
-  // }, 0)
+  setTimeout(() => {
+    if (confirm('Boom! 😂😂 press ok to restart.')) {
+      setupBoard()
+    }
+  }, 0)
 }
 
 /**
@@ -474,4 +495,71 @@ function coverButtons(buttons) {
   buttons.forEach((button) => {
     button.dataset.status = 'hidden'
   })
+}
+
+/**
+ * 顯示錯誤訊息，因為這個 <p> 是 flex item
+ * 就算沒內容還是會很奇怪的佔著空間
+ * 所以用了 display none 把它隱藏
+ * @param {String} message 錯誤訊息
+ */
+function showErrorMessage(message) {
+  errorDisplay.textContent = message
+  errorDisplay.classList.add('show')
+}
+
+/**
+ * 隱藏錯誤訊息
+ */
+function hideErrorMessage() {
+  errorDisplay.textContent = ''
+  errorDisplay.classList.remove('show')
+}
+
+/**
+ * 顯示地雷數量和更新MINES_AMOUNT
+ */
+function handleMineInput() {
+  minesAmountDisplay.textContent = minesInput.value
+  MINES_AMOUNT = parseInt(minesInput.value)
+}
+
+/**
+ * 顯示地圖尺寸和更新 BOARD_SIZE BUTTONS_AMOUNT
+ */
+function handleBoardSizeInput() {
+  boardSizeDisplay.textContent = `${boardSizeInput.value} x ${boardSizeInput.value}`
+  BOARD_SIZE = parseInt(boardSizeInput.value)
+  BUTTONS_AMOUNT = BOARD_SIZE * BOARD_SIZE
+}
+
+/**
+ * 地雷數太多顯示錯誤
+ * 或重新開始遊戲
+ */
+function handleStartButton() {
+  ERROR = MINES_AMOUNT > BUTTONS_AMOUNT / 2 ? 'Too Many Mines!!!' : null
+
+  // 中斷
+  if (ERROR) return showErrorMessage(ERROR)
+
+  // restart
+  hideErrorMessage()
+  board.innerHTML = ''
+  setupBoard()
+}
+
+/**
+ * 初始化主題顏色
+ */
+function setMapTheme() {
+  document.documentElement.style.setProperty('--theme', COLOR_VALUE)
+}
+
+/**
+ * 變換主題顏色
+ */
+function handleColorInput() {
+  COLOR_VALUE = parseInt(colorInput.value)
+  document.documentElement.style.setProperty('--theme', COLOR_VALUE)
 }

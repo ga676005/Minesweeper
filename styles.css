@@ -2,11 +2,16 @@
 ::before,
 ::after {
   box-sizing: border-box;
+  margin: 0;
 }
 
 body {
+  font-family: 'Roboto', sans-serif;
   margin: 0;
   background-color: #333;
+}
+
+.container {
   display: flex;
   align-items: center;
   font-size: 3rem;
@@ -31,6 +36,7 @@ body {
   grid-template-rows: repeat(var(--size), 60px);
   /* gap: 4px; */
   background-color: #777;
+  margin-bottom: 10rem;
 }
 
 .board > * {
@@ -62,18 +68,22 @@ body {
 }
 
 .board > [data-status='hidden']:nth-child(odd) {
-  background-color: #a7d948;
+  /* background-color: #a7d948; */
+  background-color: hsl(var(--theme), 50%, 15%);
 }
 
 .board > [data-status='hidden']:nth-child(even) {
-  background-color: #8ecc39;
+  /* background-color: #8ecc39; */
+  background-color: hsl(var(--theme), 50%, 20%);
 }
 
 .board > :not([data-status='hidden']):nth-child(odd) {
-  background-color: #d7b899;
+  /* background-color: #d7b899; */
+  background-color: hsl(calc(var(--theme) + 100), 50%, 80%);
 }
 .board > :not([data-status='hidden']):nth-child(even) {
-  background-color: #e5c29f;
+  /* background-color: #e5c29f; */
+  background-color: hsl(calc(var(--theme) + 100), 50%, 75%);
 }
 
 .board > [data-status='mine'] {
@@ -110,17 +120,50 @@ body {
 }
 
 [data-status='number'].border-left {
-  border-left: 2px solid grey;
+  border-left: 4px solid grey;
 }
 
 [data-status='number'].border-top {
-  border-top: 2px solid grey;
+  border-top: 4px solid grey;
 }
 
 [data-status='number'].border-right {
-  border-right: 2px solid grey;
+  border-right: 4px solid grey;
 }
 
 [data-status='number'].border-bottom {
-  border-bottom: 2px solid grey;
+  border-bottom: 4px solid grey;
+}
+
+.input-group {
+  font-size: 1.3rem;
+}
+
+.button {
+  display: inline-block;
+  font-size: 1.2rem;
+  padding: 0.3em 0.7em;
+  text-transform: uppercase;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.button-container {
+  margin: 0;
+  display: flex;
+}
+
+.space-children > * + * {
+  margin-top: 1rem;
+}
+
+.error-message {
+  display: none;
+  color: red;
+  font-size: 1.2rem;
+}
+
+.error-message.show {
+  display: block;
+  margin: 0;
 }
