@@ -23,7 +23,8 @@ let BOARD_SIZE = parseInt(boardSizeInput.value),
   BUTTONS_AMOUNT = BOARD_SIZE * BOARD_SIZE,
   MINES_AMOUNT = parseInt(minesInput.value),
   COLOR_VALUE = parseInt(colorInput.value),
-  ERROR = null
+  ERROR = null,
+  G_G = false
 
 setupBoard()
 
@@ -36,6 +37,10 @@ boardSizeInput.addEventListener('input', handleBoardSizeInput)
 startButton.addEventListener('click', handleStartButton)
 
 board.addEventListener('click', (e) => {
+  if (G_G && confirm('Try again?')) {
+    return setupBoard()
+  }
+
   if (e.target.matches('[data-status="marked"]')) return
 
   if (e.target.matches('[data-mine]')) {
@@ -67,9 +72,8 @@ board.addEventListener('contextmenu', (e) => {
 
 // 初始化遊戲
 function setupBoard() {
-  board.innerHTML = ''
-  minesAmountDisplay.textContent = MINES_AMOUNT
-  boardSizeDisplay.textContent = `${BOARD_SIZE} x ${BOARD_SIZE}`
+  resetState()
+  displayText()
 
   setMapSize()
   setMapTheme()
@@ -279,6 +283,7 @@ function setMapSize() {
  * gg 顯示所有地雷，按到的那顆先顯示，其他的陸續顯示
  */
 function gameover(target) {
+  G_G = true
   // 顯示按到的那顆地雷
   target.dataset.status = 'mine'
 
@@ -288,13 +293,6 @@ function gameover(target) {
 
   // 顯示剩下的地雷
   revealMines(restOfMines)
-
-  // FIXME: 先別GG
-  setTimeout(() => {
-    if (confirm('Boom! 😂😂 press ok to restart.')) {
-      setupBoard()
-    }
-  }, 0)
 }
 
 /**
@@ -303,6 +301,9 @@ function gameover(target) {
  * @param {Number} currentMineIndex
  */
 function revealMines(mines, currentMineIndex = 0) {
+  // 如果重新開始了，停止掀開炸彈
+  if (!G_G) return
+
   let counter = currentMineIndex
 
   if (counter < mines.length) {
@@ -319,8 +320,10 @@ function revealMines(mines, currentMineIndex = 0) {
  * @param {Element} element 空地的按鈕
  */
 function revealSpace(element) {
+  // 如果炸掉了就別再掀開空地，不然 confirm 中斷了 revealSpace
+  // 重新開始後還是會繼續跑
   // 如果已經是空地就中斷，不然會無限迴圈
-  if (!element.hasAttribute('data-status')) return
+  if (G_G || !element.hasAttribute('data-status')) return
 
   // 顯示空地
   delete element.dataset.status
@@ -499,8 +502,8 @@ function coverButtons(buttons) {
 
 /**
  * 顯示錯誤訊息，因為這個 <p> 是 flex item
- * 就算沒內容還是會很奇怪的佔著空間
- * 所以用了 display none 把它隱藏
+ * 就算沒內容 .space-children > * + * 得到的margin
+ * 還是會佔著空間，所以用了 display none 把它隱藏
  * @param {String} message 錯誤訊息
  */
 function showErrorMessage(message) {
@@ -517,7 +520,7 @@ function hideErrorMessage() {
 }
 
 /**
- * 顯示地雷數量和更新MINES_AMOUNT
+ * 顯示地雷數量和更新 MINES_AMOUNT
  */
 function handleMineInput() {
   minesAmountDisplay.textContent = minesInput.value
@@ -544,8 +547,6 @@ function handleStartButton() {
   if (ERROR) return showErrorMessage(ERROR)
 
   // restart
-  hideErrorMessage()
-  board.innerHTML = ''
   setupBoard()
 }
 
@@ -562,4 +563,21 @@ function setMapTheme() {
 function handleColorInput() {
   COLOR_VALUE = parseInt(colorInput.value)
   document.documentElement.style.setProperty('--theme', COLOR_VALUE)
+}
+
+/**
+ * 重置參數和隱藏錯誤訊息
+ */
+function resetState() {
+  G_G = false
+  board.innerHTML = ''
+  hideErrorMessage()
+}
+
+/**
+ * 顯示 Board Size 和 Mines Amount
+ */
+function displayText() {
+  minesAmountDisplay.textContent = MINES_AMOUNT
+  boardSizeDisplay.textContent = `${BOARD_SIZE} x ${BOARD_SIZE}`
 }
