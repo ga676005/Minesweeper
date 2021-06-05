@@ -116,6 +116,18 @@ body {
 }
 
 .count-5 {
+  color: #dd1490;
+}
+
+.count-6 {
+  color: #ab1aff;
+}
+
+.count-7 {
+  color: #ecff19;
+}
+
+.count-8 {
   color: #ff901a;
 }
 
@@ -165,5 +177,4 @@ body {
 
 .error-message.show {
   display: block;
-  margin: 0;
 }

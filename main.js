@@ -1,14 +1,3 @@
-// 製作遊戲地圖: 地雷、空地、指示旁邊有幾個地雷的數字、尺寸
-// 10 * 10 按鈕
-// 10 個地雷
-// click events
-// 點到空地會把連續的空地都打開
-// 點到地雷gg
-// 點到指示就顯示數字
-// 點右鍵標記雷區
-
-// FIXME: 轉換size後border顯示變得不正確
-
 const board = document.querySelector('.board')
 const minesInput = document.querySelector('[data-mines-amount-input]')
 const minesAmountDisplay = document.querySelector('[data-mines-amount-text]')
@@ -17,12 +6,14 @@ const boardSizeDisplay = document.querySelector('[data-board-size-text]')
 const colorInput = document.querySelector('[data-theme-input]')
 const startButton = document.querySelector('[data-start]')
 const errorDisplay = document.querySelector('[data-error-message]')
+const MineLeftText = document.querySelector('[data-mine-left]')
 
-// input value 是 String
+// !input value 是 String
 let BOARD_SIZE = parseInt(boardSizeInput.value),
   BUTTONS_AMOUNT = BOARD_SIZE * BOARD_SIZE,
   MINES_AMOUNT = parseInt(minesInput.value),
   COLOR_VALUE = parseInt(colorInput.value),
+  CURRENT_TOTAL_MINES = MINES_AMOUNT,
   ERROR = null,
   G_G = false
 
@@ -48,7 +39,8 @@ board.addEventListener('click', (e) => {
   }
 
   if (e.target.matches('[data-number]')) {
-    return showNumber(e.target)
+    showNumber(e.target)
+    return
   }
 
   if (e.target.matches('[data-space]')) {
@@ -68,13 +60,14 @@ board.addEventListener('contextmenu', (e) => {
   }
 
   toggleMarker(e.target)
+  updateMinesLeftText()
 })
 
 // 初始化遊戲
 function setupBoard() {
   resetState()
   displayText()
-
+  storeMinesNumber()
   setMapSize()
   setMapTheme()
   setupButtons()
@@ -328,23 +321,39 @@ function revealSpace(element) {
   // 顯示空地
   delete element.dataset.status
 
-  // 過濾有效的相連上下左右元素
+  // 相連的上下左右元素
   const adjacentElements = getAdjacentElement(element)
 
-  // 一個一個揭開
-  setTimeout(() => {
-    Object.values(adjacentElements).forEach((element) => {
-      if (!element) return
+  // 這個條件是為了不要呼叫 checkVictory() 那麼多次
+  // 散出去的 recursion 只會在周圍元素不是還沒掀開的區域
+  // 才呼叫 checkVictory()
+  if (
+    adjacentElements.top?.dataset?.status === 'hidden' ||
+    adjacentElements.right?.dataset?.status === 'hidden' ||
+    adjacentElements.bottom?.dataset?.status === 'hidden' ||
+    adjacentElements.left?.dataset?.status === 'hidden'
+  ) {
+    // 一個一個揭開
+    setTimeout(() => {
+      Object.values(adjacentElements).forEach((element) => {
+        if (!element) return
+        // 如果旁邊是數字
+        if (element.dataset.number) {
+          showNumber(element)
+        } else {
+          // 旁邊是空地就 recursive
+          revealSpace(element)
+        }
+      })
+    }, 60)
+  } else {
+    // 處理 edge case 大地圖 少地雷
+    // 按一下直接贏的狀況
+    checkVictory()
 
-      // 如果旁邊是數字
-      if (element.dataset.number) {
-        showNumber(element)
-      } else {
-        // 旁邊是空地就 recursive
-        revealSpace(element)
-      }
-    })
-  }, 60)
+    // marker 被 revealSpace，所以要更新
+    updateMinesLeftText()
+  }
 
   // 移除空地旁數字的 border
   removeBorders(adjacentElements)
@@ -357,7 +366,7 @@ function revealSpace(element) {
  */
 function getAdjacentElement(element) {
   const buttons = [...board.querySelectorAll('.board>div')]
-  // 用 ('div') 地雷裡的div也被會選到，所以要再區分
+  // 用 ('div') 地雷裡的 div 也被會選到，所以要再區分
 
   const index = buttons.indexOf(element)
   const { onFirstColumn, onLastColumn, onFirstRow, onLastRow } =
@@ -386,8 +395,11 @@ function getAdjacentElement(element) {
 function showNumber(element) {
   element.dataset.status = 'number'
   element.textContent = element.dataset.number
-
   borderController(element)
+
+  // 通常最後勝利前是打開數字
+  // 所以在這裡檢查
+  checkVictory()
 }
 
 /**
@@ -580,4 +592,33 @@ function resetState() {
 function displayText() {
   minesAmountDisplay.textContent = MINES_AMOUNT
   boardSizeDisplay.textContent = `${BOARD_SIZE} x ${BOARD_SIZE}`
+  MineLeftText.textContent = MINES_AMOUNT
+}
+
+/**
+ * 如果還沒點的區域跟地雷數一樣就等於勝利了
+ */
+function checkVictory() {
+  const hiddenArea = [...document.querySelectorAll('[data-status=hidden]')]
+  if (hiddenArea.length === CURRENT_TOTAL_MINES) {
+    alert(`(☞ﾟヮﾟ)☞ ☜(ﾟヮﾟ☜) (☞ﾟヮﾟ)☞ ☜(ﾟヮﾟ☜)`)
+  }
+}
+
+/**
+ * 更新扣掉 marker 後的地雷剩餘數量
+ */
+function updateMinesLeftText() {
+  const markersCount = Array.from(
+    document.querySelectorAll('[data-status="marked"]'),
+  ).length
+  MineLeftText.textContent = MINES_AMOUNT - markersCount
+}
+
+/**
+ * 按下開始遊戲當下的地雷總數
+ * 拿來計算勝利用的
+ */
+function storeMinesNumber() {
+  CURRENT_TOTAL_MINES = MINES_AMOUNT
 }
