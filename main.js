@@ -599,8 +599,13 @@ function displayText() {
  * 如果還沒點的區域跟地雷數一樣就等於勝利了
  */
 function checkVictory() {
-  const hiddenArea = [...document.querySelectorAll('[data-status=hidden]')]
-  if (hiddenArea.length === CURRENT_TOTAL_MINES) {
+  const hiddenAreaCount = [...document.querySelectorAll('[data-status=hidden]')]
+    .length
+  const markedAreaCount = [
+    ...document.querySelectorAll('[data-status="marked"]'),
+  ].length
+
+  if (hiddenAreaCount + markedAreaCount === CURRENT_TOTAL_MINES) {
     alert(`(☞ﾟヮﾟ)☞ ☜(ﾟヮﾟ☜) (☞ﾟヮﾟ)☞ ☜(ﾟヮﾟ☜)`)
   }
 }
