@@ -4,6 +4,8 @@ const minesAmountDisplay = document.querySelector('[data-mines-amount-text]')
 const boardSizeInput = document.querySelector('[data-board-size-input]')
 const boardSizeDisplay = document.querySelector('[data-board-size-text]')
 const colorInput = document.querySelector('[data-theme-input]')
+const tileSizeInput = document.querySelector('[data-tile-size-input]')
+const tileSizeDisplay = document.querySelector('[data-tile-size-text]')
 const startButton = document.querySelector('[data-start]')
 const errorDisplay = document.querySelector('[data-error-message]')
 const MineLeftText = document.querySelector('[data-mine-left]')
@@ -13,11 +15,14 @@ let BOARD_SIZE = parseInt(boardSizeInput.value),
   BUTTONS_AMOUNT = BOARD_SIZE * BOARD_SIZE,
   MINES_AMOUNT = parseInt(minesInput.value),
   COLOR_VALUE = parseInt(colorInput.value),
+  TILE_SIZE = parseInt(tileSizeInput.value),
   CURRENT_TOTAL_MINES = MINES_AMOUNT,
   ERROR = null,
   G_G = false
 
 setupBoard()
+
+tileSizeInput.addEventListener('input', handleTileSizeInput)
 
 colorInput.addEventListener('input', handleColorInput)
 
@@ -267,9 +272,10 @@ function setupButtons() {
   board.appendChild(fragment)
 }
 
-// 用custom property決定地圖尺寸
+// 用 custom property 決定地圖尺寸
 function setMapSize() {
   document.documentElement.style.setProperty('--size', BOARD_SIZE)
+  board.style.setProperty('--tile-size', `${tileSizeInput.value}px`)
 }
 
 /**
@@ -561,7 +567,10 @@ function handleBoardSizeInput() {
  * 或重新開始遊戲
  */
 function handleStartButton() {
-  ERROR = MINES_AMOUNT > BUTTONS_AMOUNT / 2 ? 'Too Many Mines!!!' : null
+  const errorMessage = `Reduce the amount of mines to ${Math.floor(
+    BUTTONS_AMOUNT / 2,
+  )} or below.`
+  ERROR = MINES_AMOUNT > BUTTONS_AMOUNT / 2 ? errorMessage : null
 
   // 中斷
   if (ERROR) return showErrorMessage(ERROR)
@@ -601,6 +610,7 @@ function displayText() {
   minesAmountDisplay.textContent = MINES_AMOUNT
   boardSizeDisplay.textContent = `${BOARD_SIZE} x ${BOARD_SIZE}`
   MineLeftText.textContent = MINES_AMOUNT
+  tileSizeDisplay.textContent = TILE_SIZE
 }
 
 /**
@@ -634,4 +644,13 @@ function updateMinesLeftText() {
  */
 function storeMinesNumber() {
   CURRENT_TOTAL_MINES = MINES_AMOUNT
+}
+
+/**
+ * 更新 tile 大小和顯示改變的值
+ */
+function handleTileSizeInput() {
+  board.style.setProperty('--tile-size', `${tileSizeInput.value}px`)
+  TILE_SIZE = tileSizeInput.value
+  tileSizeDisplay.textContent = tileSizeInput.value
 }
