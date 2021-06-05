@@ -445,8 +445,11 @@ function borderController(element) {
 
   // 左邊有元素時
   if (left) {
-    // 如果左邊元素不是數字，而且還沒按過，加上border left
-    if (left.dataset.status === 'hidden' && left.dataset.status !== 'number') {
+    // 如果左邊元素不是數字，而且還沒按過或是標記地，加上border left
+    if (
+      (left.dataset.status === 'hidden' || left.dataset.status === 'marked') &&
+      left.dataset.status !== 'number'
+    ) {
       element.classList.add('border-left')
     }
 
@@ -463,9 +466,10 @@ function borderController(element) {
       right.classList.remove('border-left')
     }
 
-    // 如果右邊元素不是數字，而且還沒按過，加上border right
+    // 如果右邊元素不是數字，而且還沒按過或是標記地，加上border right
     if (
-      right.dataset.status === 'hidden' &&
+      (right.dataset.status === 'hidden' ||
+        right.dataset.status === 'marked') &&
       right.dataset.status !== 'number'
     ) {
       element.classList.add('border-right')
@@ -474,8 +478,11 @@ function borderController(element) {
 
   // 上方有元素時
   if (top) {
-    // 如果上方元素不是數字，而且還沒按過，加上border top
-    if (top.dataset.status === 'hidden' && top.dataset.status !== 'number') {
+    // 如果上方元素不是數字，而且還沒按過或是標記地，加上border top
+    if (
+      (top.dataset.status === 'hidden' || top.dataset.status === 'marked') &&
+      top.dataset.status !== 'number'
+    ) {
       element.classList.add('border-top')
     }
 
@@ -492,9 +499,10 @@ function borderController(element) {
       bottom.classList.remove('border-top')
     }
 
-    // 如果下方元素不是數字，而且還沒按過，加上border bottom
+    // 如果下方元素不是數字，而且還沒按過或是標記地，加上border bottom
     if (
-      bottom.dataset.status === 'hidden' &&
+      (bottom.dataset.status === 'hidden' ||
+        bottom.dataset.status === 'marked') &&
       bottom.dataset.status !== 'number'
     ) {
       element.classList.add('border-bottom')
