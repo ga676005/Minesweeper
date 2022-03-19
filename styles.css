@@ -37,14 +37,21 @@ body {
   --tile-size: 60px;
   display: inline-grid;
   padding: 10px;
-  grid-template-columns: repeat(var(--size), var(--tile-size));
-  grid-template-rows: repeat(var(--size), var(--tile-size));
+  grid-template-columns: repeat(
+    var(--size),
+    min(calc(90vw / var(--size)), var(--tile-size))
+  );
+  grid-template-rows: repeat(
+    var(--size),
+    min(calc(90vw / var(--size)), var(--tile-size))
+  );
   background-color: #777;
   margin-bottom: 10rem;
 }
 
 .board > div {
-  font-size: calc(var(--tile-size) / 1.5);
+  /* font-size: clamp(0.1rem, 0.5rem + 2vw, calc(var(--tile-size) / 1.5)); */
+  font-size: clamp(0.5rem, 0.5rem + 1vw, calc(var(--tile-size) / 1.5));
   position: relative;
   z-index: 0;
 }
