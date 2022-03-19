@@ -1,3 +1,7 @@
+:root {
+  --border-width: 4px;
+}
+
 *,
 ::before,
 ::after {
@@ -41,6 +45,54 @@ body {
 
 .board > div {
   font-size: calc(var(--tile-size) / 1.5);
+  position: relative;
+  z-index: 0;
+}
+
+.board > div > .dot {
+  position: absolute;
+  width: var(--border-width);
+  height: var(--border-width);
+  background: grey;
+  opacity: 0;
+}
+
+.board > div.show-dot.tl > .dot.tl {
+  opacity: 1;
+}
+
+.board > div.show-dot.tr > .dot.tr {
+  opacity: 1;
+}
+
+.board > div.show-dot.bl > .dot.bl {
+  opacity: 1;
+}
+
+.board > div.show-dot.br > .dot.br {
+  opacity: 1;
+}
+
+.board > div > .dot.tl {
+  top: 0;
+  left: 0;
+  border-bottom-right-radius: 100%;
+}
+
+.board > div > .dot.tr {
+  top: 0;
+  right: 0;
+  border-bottom-left-radius: 100%;
+}
+.board > div > .dot.bl {
+  bottom: 0;
+  left: 0;
+  border-top-right-radius: 100%;
+}
+.board > div > .dot.br {
+  bottom: 0;
+  right: 0;
+  border-top-left-radius: 100%;
 }
 
 .board > * {
@@ -91,7 +143,7 @@ body {
   place-content: center;
 }
 
-[data-status='mine'] > div {
+[data-status='mine'] > .mine {
   background-color: hsl(var(--bg-mine), 80%, 25%) !important;
   width: 0.65em;
   height: 0.65em;
@@ -131,19 +183,26 @@ body {
 }
 
 [data-status='number'].border-left {
-  border-left: 0.15em solid grey;
+  border-left: var(--border-width) solid grey;
 }
 
 [data-status='number'].border-top {
-  border-top: 0.15em solid grey;
+  border-top: var(--border-width) solid grey;
 }
 
 [data-status='number'].border-right {
-  border-right: 0.15em solid grey;
+  border-right: var(--border-width) solid grey;
 }
 
 [data-status='number'].border-bottom {
-  border-bottom: 0.15em solid grey;
+  border-bottom: var(--border-width) solid grey;
+}
+
+[data-status='number']::before {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  content: attr(data-count);
 }
 
 .input-group {

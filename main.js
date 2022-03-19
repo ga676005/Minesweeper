@@ -1,3 +1,4 @@
+//@ts-nocheck
 const board = document.querySelector('.board')
 const minesInput = document.querySelector('[data-mines-amount-input]')
 const minesAmountDisplay = document.querySelector('[data-mines-amount-text]')
@@ -80,6 +81,28 @@ function setupBoard() {
   const minesNumbers = setupMines(buttons)
   setupNumbersAroundMines(buttons, minesNumbers)
   coverButtons(buttons)
+  setupBorderJoints(buttons)
+}
+
+/**
+ * 對不是地雷的按鈕們加上 border 連接點元素
+ * @param {Element} buttons 地圖上所有按鈕
+ */
+function setupBorderJoints (buttons) {
+  const notMinesButtons = buttons.filter((btn)=> !btn.dataset.mine)
+  const dotsPositionClass = ['tl','tr','bl','br']
+
+  notMinesButtons.forEach((tile)=>{
+    // button 裡四個角落的點點 暫時沒用到
+    const dots = dotsPositionClass.reduce((acc,className,index)=>{
+      const dot = document.createElement('div')
+      dot.classList.add('dot',className)
+      tile.appendChild(dot)
+  
+      acc[className] = dot
+      return acc
+    },{})
+  })
 }
 
 /**
@@ -229,6 +252,7 @@ function styleMine(element) {
   element.style.setProperty('--bg-mine', Math.random() * 720)
 
   const div = document.createElement('div')
+  div.classList.add('mine')
 
   element.appendChild(div)
 }
@@ -363,6 +387,8 @@ function revealSpace(element) {
 
   // 移除空地旁數字的 border
   removeBorders(adjacentElements)
+  // 移除不對的 borders 連接點
+  removeRedundantBorderJoints(adjacentElements)
 }
 
 /**
@@ -400,7 +426,8 @@ function getAdjacentElement(element) {
  */
 function showNumber(element) {
   element.dataset.status = 'number'
-  element.textContent = element.dataset.number
+  element.dataset.count =  element.dataset.number
+
   borderController(element)
 
   // 通常最後勝利前是打開數字
@@ -424,21 +451,21 @@ function toggleMarker(element) {
  * 把緊鄰空地的數字元素的 border 移除
  * @param {Object} adjacentElements 空地旁的上下左右元素
  */
-function removeBorders(adjacentElements) {
-  if (adjacentElements.left) {
-    adjacentElements.left.classList.remove('border-right')
+function removeBorders({ top, right, bottom, left}) {
+  if (left) {
+    left.classList.remove('border-right')
   }
 
-  if (adjacentElements.right) {
-    adjacentElements.right.classList.remove('border-left')
+  if (right) {
+    right.classList.remove('border-left')
   }
 
-  if (adjacentElements.top) {
-    adjacentElements.top.classList.remove('border-bottom')
+  if (top) {
+    top.classList.remove('border-bottom')
   }
 
-  if (adjacentElements.bottom) {
-    adjacentElements.bottom.classList.remove('border-top')
+  if (bottom) {
+    bottom.classList.remove('border-top')
   }
 }
 
@@ -514,6 +541,59 @@ function borderController(element) {
       element.classList.add('border-bottom')
     }
   }
+
+  addJointsToBorders([element, top, left, right, bottom])
+}
+
+/**
+ * 計算 border 連接點
+ * @param {Array} elements 點開的元素和前後左右的元素
+ */
+function addJointsToBorders (elements) {
+  elements.forEach((element)=>{
+    if(!element || element.dataset.status === 'hidden') return
+
+    const { top, left, bottom, right } = getAdjacentElement(element)
+    removeRedundantBorderJoints({ top, right ,bottom, left})
+
+    if(top && left && top.classList.contains('border-left') && left.classList.contains('border-top')) {
+      element.classList.add('show-dot','tl')
+    }
+  
+    if(top && right && top.classList.contains('border-right') && right.classList.contains('border-top')) {
+      element.classList.add('show-dot','tr')
+    }
+  
+    if(bottom && left && bottom.classList.contains('border-left') && left.classList.contains('border-bottom')) {
+      element.classList.add('show-dot','bl')
+    }
+  
+    if(bottom && right && bottom.classList.contains('border-right') && right.classList.contains('border-bottom')) {
+      element.classList.add('show-dot','br')
+    }
+  })
+}
+
+function removeRedundantBorderJoints ({ top, right ,bottom, left}) {
+    if(top && left) {
+      const { left: topLeft} = getAdjacentElement(top)
+      topLeft.classList.remove('br')
+    }
+
+    if(top && right) {
+      const { right: topRight} = getAdjacentElement(top)
+      topRight.classList.remove('bl')
+    }
+
+    if(bottom && left) {
+      const { left: bottomLeft} = getAdjacentElement(bottom)
+      bottomLeft.classList.remove('tr')
+    }
+
+    if(bottom && right) {
+      const { right: bottomRight} = getAdjacentElement(bottom)
+      bottomRight.classList.remove('tl')
+    }
 }
 
 /**
